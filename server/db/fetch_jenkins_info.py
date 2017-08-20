@@ -2,6 +2,8 @@ from pymongo import MongoClient
 import requests
 import json
 from server.settings import *
+import argparse
+import os.path
 
 
 def drop_db(client, name):
@@ -9,13 +11,14 @@ def drop_db(client, name):
     client.drop_database(name)
 
 
-def populate_db(db):
+def populate_db(db, fname):
     """
     Populate DB from file
     :param db: 
     :return: 
     """
-    data = eval(open('.data', 'r').read())
+    assert os.path.isfile(fname), "data file is not found"
+    data = eval(open(fname, 'r').read())
 
     sites = data['sites']
     rec_ids = db.jenkins_sites.insert_many(sites).inserted_ids
@@ -88,14 +91,25 @@ def main():
 
     db = client.reporting
     # populate with sites and jobs from .data file
-    populate_db(db)
+    populate_db(db, args.data_file)
 
     # fetch jenkins info and store in DB
-    server_url = "http://{}/api/jenkins".format(FLASK_SERVER_NAME)
+    server_url = "http://{}:{}/api/jenkins".format(args.host, args.port)
     jf = JenkinsFetcher(db, server_url)
     jf.fetch_builds()
     jf.fetch_test_results()
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-H", "--host",
+                        help="report server host",
+                        default="localhost")
+    parser.add_argument("-P", "--port",
+                        help="report server port",
+                        default="5001")
+    parser.add_argument("-F", "--data_file",
+                        help="data file to pre populate DB",
+                        default="server/db/.data")
+    args = parser.parse_args()
     main()
