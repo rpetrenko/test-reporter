@@ -9,10 +9,12 @@ from server.api.jenkins.endpoints.stats import ns as jenkins_test_stats_namespac
 from server.api.jenkins.endpoints.datas import ns as jenkins_datas_namespace
 from server.api.common import api
 from server.db import db
-
+import os
 
 app = Flask(__name__)
-logging.config.fileConfig('logging.conf')
+logging_conf_file = os.path.abspath("server/logging.conf")
+print(logging_conf_file)
+logging.config.fileConfig(logging_conf_file)
 log = logging.getLogger(__name__)
 
 
