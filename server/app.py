@@ -59,7 +59,8 @@ def main():
         with app.app_context():
             reset_database(app)
 
-    app.run(debug=settings.FLASK_DEBUG)
+    host, port = app.config['SERVER_NAME'].split(':')
+    app.run(host=host, port=port, debug=settings.FLASK_DEBUG)
 
 
 if __name__ == "__main__":
