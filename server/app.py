@@ -10,6 +10,8 @@ from server.api.jenkins.endpoints.datas import ns as jenkins_datas_namespace
 from server.api.common import api
 from server.db import db
 import os
+import argparse
+
 
 app = Flask(__name__)
 logging_conf_file = os.path.abspath("server/logging.conf")
@@ -19,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def configure_app(flask_app):
-    flask_app.config['SERVER_NAME'] = settings.FLASK_SERVER_NAME
+    # flask_app.config['SERVER_NAME'] = settings.FLASK_SERVER_NAME
     flask_app.config['MONGO_DBNAME'] = settings.MONGO_DBNAME
     flask_app.config['SWAGGER_UI_DOC_EXPANSION'] = settings.RESTPLUS_SWAGGER_UI_DOC_EXPANSION
     flask_app.config['RESTPLUS_VALIDATE'] = settings.RESTPLUS_VALIDATE
@@ -51,16 +53,25 @@ def reset_database(flask_app):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    default_host = "localhost"
+    default_port = "8888"
+    parser.add_argument("-H", "--host",
+                        help="Hostname of the Flask app [default %s]" % default_host,
+                        default=default_host)
+    parser.add_argument("-P", "--port",
+                        help="Port for the Flask app [default %s]" % default_port,
+                        default=default_port)
+    args = parser.parse_args()
+
     initialize_app(app)
-    log.info('Starting development server at http://{}/api/'.format(app.config['SERVER_NAME']))
 
     reset_db = not True
     if reset_db:
         with app.app_context():
             reset_database(app)
 
-    host, port = app.config['SERVER_NAME'].split(':')
-    app.run(host=host, port=port, debug=settings.FLASK_DEBUG)
+    app.run(host=args.host, port=args.port, debug=settings.FLASK_DEBUG)
 
 
 if __name__ == "__main__":
