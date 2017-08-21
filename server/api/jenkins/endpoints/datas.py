@@ -25,8 +25,9 @@ class Data(DataBase):
 
     def get(self, doc_id):
         x = self.model.get(doc_id=doc_id)
-        x = db_response_to_json(x)
-        x['data'] = json.loads(x['data'])
+        if x:
+            x = db_response_to_json(x)
+            x['data'] = json.loads(x['data'])
         return x, x and 200 or 404
 
 

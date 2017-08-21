@@ -17,21 +17,24 @@ def populate_db(db, fname):
     :param db: 
     :return: 
     """
+    print("Populating DB with sites and jobs from .data file")
     assert os.path.isfile(fname), "data file is not found"
     data = eval(open(fname, 'r').read())
 
     sites = data['sites']
-    rec_ids = db.jenkins_sites.insert_many(sites).inserted_ids
-    assert len(rec_ids) == len(sites)
+    for site in sites:
+        if db.jenkins_sites.find_one({"name": site['name']}):
+            continue
+        else:
+            rec_id = db.jenkins_sites.insert_one(site).inserted_id
 
     jobs = data['jobs']
-    rec_ids = db.jenkins_jobs.insert_many(jobs).inserted_ids
-
-    # builds = data['builds']
-    # rec_ids = db.jenkins_builds.insert_many(builds).inserted_ids
-
-    # test_reports = data['test_reports']
-    # rec_ids = db.jenkins_test_reports.insert_many(test_reports).inserted_ids
+    for job in jobs:
+        if db.jenkins_jobs.find_one({"name": job['name']}):
+            continue
+        else:
+            rec_ic = db.jenkins_jobs.insert_one(job).inserted_id
+    print("Done")
 
 
 class JenkinsFetcher(object):
@@ -40,6 +43,7 @@ class JenkinsFetcher(object):
         self.api_url = api_url
 
     def fetch_builds(self):
+        print("Getting jenkins builds")
         jobs = self.db.jenkins_jobs.find()
         for job in jobs:
             print("FB JOB:", job)
@@ -49,7 +53,7 @@ class JenkinsFetcher(object):
             for build in builds:
                 bld_url = job['url'].rstrip('/')
                 bld_url = "{}/{}".format(bld_url, build)
-                print("BLD_URL:", bld_url)
+                # print("BLD_URL:", bld_url)
                 uri = "{}/builds/".format(self.api_url)
                 data = {
                     "url": bld_url
@@ -65,6 +69,7 @@ class JenkinsFetcher(object):
             assert resp.ok, "can't fetch build data"
 
     def fetch_test_results(self):
+        print("Getting jenkins test results")
         builds = self.db.jenkins_builds.find()
         for build in builds:
             print("FT BUILD:", build)
@@ -87,7 +92,9 @@ class JenkinsFetcher(object):
 
 def main():
     client = MongoClient()
-    drop_db(client, MONGO_DBNAME)
+    if args.drop_db:
+        drop_db(client, MONGO_DBNAME)
+        return
 
     db = client.reporting
     # populate with sites and jobs from .data file
@@ -96,8 +103,10 @@ def main():
     # fetch jenkins info and store in DB
     server_url = "http://{}:{}/api/jenkins".format(args.host, args.port)
     jf = JenkinsFetcher(db, server_url)
-    jf.fetch_builds()
-    jf.fetch_test_results()
+    if args.get_builds:
+        jf.fetch_builds()
+    if args.get_tests:
+        jf.fetch_test_results()
 
 
 if __name__ == "__main__":
@@ -111,5 +120,26 @@ if __name__ == "__main__":
     parser.add_argument("-F", "--data_file",
                         help="data file to pre populate DB",
                         default="server/db/.data")
+    parser.add_argument('-D', '--drop_db',
+                        required=False,
+                        default=False,
+                        action='store_const',
+                        const='True',
+                        help='Drop database'
+                        )
+    parser.add_argument('-B', '--get_builds',
+                        required=False,
+                        default=False,
+                        action='store_const',
+                        const='True',
+                        help='Get jenkins builds'
+                        )
+    parser.add_argument('-T', '--get_tests',
+                        required=False,
+                        default=False,
+                        action='store_const',
+                        const='True',
+                        help='Get jenkins test reports'
+                        )
     args = parser.parse_args()
     main()

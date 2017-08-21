@@ -13,3 +13,5 @@ export PYTHONPATH="${PYTHONPATH}:."
 python server/app.py
 ```
 
+## Notes
+* don't fetch builds that are not complete (still running)

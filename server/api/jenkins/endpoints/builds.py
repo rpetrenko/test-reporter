@@ -29,7 +29,6 @@ class Builds(BuildBase):
 
     @api.marshal_list_with(build_schema)
     def get(self):
-        # log.info("getting sites")
         return db_response_to_json(self.model.get())
 
     @api.response(201, "Added jenkins build.")

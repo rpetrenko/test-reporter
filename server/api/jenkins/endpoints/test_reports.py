@@ -1,4 +1,4 @@
-
+import logging
 from flask import request
 from flask_restplus import Resource
 from server.api.jenkins.parsers import get_args
@@ -7,6 +7,8 @@ from server.api.common import api, db_response_to_json
 from server.db.models import JenkinsTestReports, JenkinsSites
 
 ns = api.namespace('jenkins/test_reports', description='Jenkins test reports')
+
+log = logging.getLogger(__name__)
 
 
 class TestReportBase(Resource):
@@ -33,7 +35,9 @@ class TestReports(TestReportBase):
     def get(self):
         args = get_args.parse_args(request)
         data = args.get('data_only', False)
-        return db_response_to_json(self.model.get(data=data))
+        results = db_response_to_json(self.model.get(data=data))
+        log.info("Got {} records for test reports".format(len(results)))
+        return results
 
     @api.response(201, "Added jenkins build.")
     @api.expect(test_report_schema)
@@ -69,4 +73,10 @@ class TestReport(TestReportBase):
 @api.response(404, 'Report not found.')
 class TestReportInfo(TestReportBase):
     def get(self, name):
-        return self.model.get_data(self.sites, name)
+        data, rc = self.model.get_data(self.sites, name)
+        if rc == 404:
+            # handle test report when there is no data
+            x = self.model.get(name=name)
+            self.model.add_data_to_doc(x, data)
+        return data, rc
+

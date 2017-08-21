@@ -33,7 +33,13 @@ def jenkins_response_to_json(x):
 def insert_creds_to_jenkins_url(username, api_key, uri):
     parts = uri.split("://")
     assert len(parts) == 2
-    uri = "{}://{}:{}@{}".format(parts[0], username, api_key, parts[1])
+    if api_key:
+        insert_part = "{}:{}@".format(username, api_key)
+    elif username:
+        insert_part = "{}@".format(username)
+    else:
+        insert_part = ""
+    uri = "{}://{}{}".format(parts[0], insert_part, parts[1])
     return uri
 
 

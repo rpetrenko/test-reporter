@@ -1,9 +1,12 @@
 import requests
 import json
 from bson.objectid import ObjectId
+import logging
 
 from server.db import db
-from server.api.common import jenkins_response_to_json, create_jenkins_uri
+from server.api.common import jenkins_response_to_json, create_jenkins_uri, db_response_to_json
+
+log = logging.getLogger(__name__)
 
 
 class JenkinsBase(object):
@@ -12,6 +15,14 @@ class JenkinsBase(object):
 
     def __init__(self):
         self.data_collection = db.db.jenkins_data
+
+    def has_data(self, document):
+        data_id = document.get('data')
+        if data_id:
+            resp = self.get_data_record(data_id)
+            if resp['data'] != 'null':
+                return True
+        return False
 
     def get(self, name=None, url=None, data=None):
         if name:
@@ -24,9 +35,9 @@ class JenkinsBase(object):
             res = docs
         if data:
             if isinstance(res, list):
-                return [r for r in res if r.get('data')]
+                return [r for r in res if self.has_data(r)]
             else:
-                return res if res.get('data') else ''
+                return res if self.has_data(res) else ''
         else:
             return res
 
@@ -57,6 +68,14 @@ class JenkinsBase(object):
         rec_id = db_resp.inserted_id
         return rec_id
 
+    def add_data_to_doc(self, document, data):
+        rec_id = self.insert_data(data)
+        document['data'] = str(rec_id)
+        self.update(document['name'], document)
+
+    def get_data_record(self, data_id):
+        return self.data_collection.find_one({"_id": ObjectId(data_id)})
+
     def get_data(self, sites, name):
         x = self.get(name=name)
         if not x:
@@ -65,7 +84,7 @@ class JenkinsBase(object):
         if x.get('data', None):
             # fetch data locally
             data_id = x['data']
-            data = self.data_collection.find_one({"_id": ObjectId(data_id)})
+            data = self.get_data_record(data_id)
             return json.loads(data['data']), 200
 
         if len(name.split(':')) == 1:  # this is sites itself
@@ -74,14 +93,17 @@ class JenkinsBase(object):
             site_name = x['name'].split(':')[0]
             site = sites.get(name=site_name)
         uri = create_jenkins_uri(site['username'], site['api_key'], x['url'])
-
+        log.info("GET: {}".format(uri))
         resp = requests.get(uri, verify=False)
         data = None
         if resp.ok:
             data = jenkins_response_to_json(resp.text)
-            rec_id = self.insert_data(data)
-            x['data'] = str(rec_id)
-            self.update(name, x)
+            if data.get('building'):
+                log.info("SKIP builds that are not complete")
+            else:
+                self.add_data_to_doc(x, data)
+        else:
+            log.error(resp.text)
         return data, resp.status_code
 
     def get_count(self):
