@@ -117,7 +117,7 @@ class JenkinsFetcher(object):
         labels = json.loads(resp.text)
         builds = self.db.jenkins_builds.find()
         for build in builds:
-            if build.get('label'):
+            if build.get('label') and build['label'] != "null":
                 continue
             label = get_label_for_build(labels, build['name'])
             if label:

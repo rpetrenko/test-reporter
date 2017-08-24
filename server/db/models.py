@@ -283,10 +283,8 @@ class JenkinsTestReports(JenkinsBase):
                     "url": resp["url"],
                     "build_data": build["data"],
                     "test_data": resp["data"],
-                    "label": build["label"]
+                    "label": build.get("label")
                 }
-                # if 'label' in test_data_fields.split(','):
-                #     d['label'] =
                 res.append(d)
         return res
 
