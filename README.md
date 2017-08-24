@@ -16,5 +16,7 @@ python server/app.py
 ## Notes
 * don't fetch builds that are not complete (still running)
 
-## Macros
-* JENKINS_ARTIFACT_URL points to "http://<jenkins_build_url>/<build_number>/artifact"
+## Labels
+For labels the following keywords predefined:
+* BUILD_ARTIFACT_API
+* BUILD_INFO_API

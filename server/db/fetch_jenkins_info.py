@@ -123,7 +123,7 @@ class JenkinsFetcher(object):
             if label:
                 parser = eval(label['parser'])
                 print("APPLY LABEL", label['name'], "BUILD", build['name'])
-                uri = None
+                label_data = None
                 if "BUILD_INFO_API" == label['url']:
                     uri = "{}/builds/{}/info".format(self.api_url, build['name'])
                     resp = requests.get(uri)
@@ -132,7 +132,7 @@ class JenkinsFetcher(object):
                 elif "BUILD_ARTIFACT_API" in label['url']:
                     artifact_pattern = label['artifact_pattern']
                     uri = "{}/builds/{}/artifacts?search=".format(self.api_url, build['name'])
-                    uri = "{}{}".format(uri, ["sut_releases\.json$"])
+                    uri = "{}{}".format(uri, artifact_pattern)
                     print("ARTIFACT URL", uri)
                     resp = requests.get(uri)
                     if resp.ok:

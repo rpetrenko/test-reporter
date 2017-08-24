@@ -1,7 +1,8 @@
 # Flask settings
+import os
 # FLASK_SERVER_NAME = '0.0.0.0:8888'
 FLASK_DEBUG = False  # Do not use debug mode in production
-SECRET_KEY = "eEwXB6LzBBbG90TOC2qniDaW4rfAsUhokwu9K6TjQD0="
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # Flask-Restplus settings
 RESTPLUS_SWAGGER_UI_DOC_EXPANSION = 'list'
