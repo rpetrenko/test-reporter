@@ -1,0 +1,28 @@
+{
+    "sites":
+    [
+        {
+            "name": "",
+            "url": "",
+            "username": "",
+            "api_key": "",
+        }
+    ],
+    "jobs":
+    [
+        {
+            "url": ""
+        }
+    ],
+    "labels": [
+        {
+            "name": "label1",
+            "url": "BUILD_INFO_API",
+            "parser": "lambda x: x['displayName']",
+            "build_name_patterns": [
+                ".+"
+            ]
+        }
+    ]
+
+}

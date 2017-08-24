@@ -15,3 +15,6 @@ python server/app.py
 
 ## Notes
 * don't fetch builds that are not complete (still running)
+
+## Macros
+* JENKINS_ARTIFACT_URL points to "http://<jenkins_build_url>/<build_number>/artifact"

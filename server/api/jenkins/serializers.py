@@ -19,7 +19,9 @@ job_schema = api.model('Jenkins jobs', {
 build_schema = api.model('Jenkins builds', {
     'url': fields.String(required=True, description='build url'),
     'name': fields.String(required=False, description="build name"),
-    'data': fields.String(required=False, description='jenkins json data')
+    'data': fields.String(required=False, description='jenkins json data'),
+    'label': fields.String(required=False, description='build label'),
+    'artifacts': fields.String(required=False, description='build artifacts')
 })
 
 
@@ -28,3 +30,11 @@ test_report_schema = api.model('Jenkins test reports', {
     'name': fields.String(required=False, description="test report name"),
     'data': fields.String(required=False, description='jenkins json data')
 })
+
+label_schema = api.model('Jenkins labels', {
+    'url': fields.String(required=True, description="build's artifact url"),
+    'name': fields.String(required=False, description="label name"),
+    'parsing': fields.String(required=False,
+                             description="response parsing function, e.g: lambda x: x['response']")
+})
+
