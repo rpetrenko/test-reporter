@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 import requests
 import json
 from bson.objectid import ObjectId
@@ -18,7 +21,7 @@ log = logging.getLogger(__name__)
 class DbDocument(object):
     collection = None
 
-    def get(self, doc_id=None):
+    def get_doc(self, doc_id=None):
         """
         :param doc_id: document id
         :return: if not specified, returned list of ids, otherwise record with data
@@ -49,18 +52,34 @@ class DbDocument(object):
     def get_count(self):
         return self.collection.count()
 
-    def insert(self, data):
-        if self.collection.count({'name': data['name']}) == 0:
+    def insert(self, data, allow_duplicates=None):
+        """
+        
+        :param data: 
+        :param allow_duplicates: 
+        :return: 
+        """
+        if self.collection.count({'name': data['name']}) and not allow_duplicates:
+            return False
+        else:
             rec_id = self.collection.insert_one(data).inserted_id
             assert rec_id, "entry was not created"
-            return True
-        else:
-            return False
+            return rec_id
 
     def remove_by_name(self, name):
         resp = self.collection.remove({"name": name})
         assert resp['n'] > 0, "can't delete document {}".format(name)
         return True
+
+
+class JenkinsData(DbDocument):
+    def __init__(self):
+        self.collection = db.db.jenkins_data
+
+
+class JenkinsLabels(DbDocument):
+    def __init__(self):
+        self.collection = db.db.jenkins_labels
 
 
 class JenkinsBase(DbDocument):
@@ -146,24 +165,34 @@ class JenkinsBase(DbDocument):
             res.append(json.loads(r['data']))
         return res
 
-    def get_data(self, sites, name):
-        x = self.get(name=name)
-        if not x:
+    def _get_data(self, doc):
+        if not doc:
             return None, 404
-        x = x[0]
+        x = doc[0]
         if x.get('data', None):
             # fetch data locally
             data_id = x['data']
             data = self.get_data_record(data_id)
             return json.loads(data['data']), 200
-
-        if len(name.split(':')) == 1:  # this is sites itself
-            site = self.get(name=name)
         else:
+            return None, 200
+
+    def get_data(self, sites, name):
+        doc = self.get(name=name)
+        data, rc = self._get_data(doc)
+        if not data and rc == 200:
+            # fetch data from jenkins
+            x = doc[0]
             site_name = x['name'].split(':')[0]
             site = sites.get(name=site_name)
-        site = site[0]
-        uri = create_jenkins_uri(site['username'], site['api_key'], x['url'])
+            site = site[0]
+            data, rc = self._get_jenkins_url(site, x['url'])
+            if data:
+                self.add_data_to_doc(x, data)
+        return data, rc
+
+    def _get_jenkins_url(self, site, uri):
+        uri = create_jenkins_uri(site['username'], site['api_key'], uri)
         log.info("GET: {}".format(uri))
         resp = requests.get(uri, verify=False)
         data = None
@@ -171,17 +200,34 @@ class JenkinsBase(DbDocument):
             data = jenkins_response_to_json(resp.text)
             if data.get('building'):
                 log.info("SKIP builds that are not complete")
-            else:
-                self.add_data_to_doc(x, data)
         else:
             log.error(resp.text)
         return data, resp.status_code
+
+
+class JenkinsSuites(JenkinsBase):
+    def __init__(self):
+        self.collection = db.db.jenkins_suites
+        super(JenkinsSuites, self).__init__()
 
 
 class JenkinsSites(JenkinsBase):
     def __init__(self):
         self.collection = db.db.jenkins_sites
         super(JenkinsSites, self).__init__()
+
+    def get_site_data(self, name):
+        doc = self.get(name=name)
+        data, rc = self._get_data(doc)
+        if not data and rc == 200:
+            # fetch data from jenkins
+            x = doc[0]
+            site = self.get(name=name)
+            site = site[0]
+            data, rc = self._get_jenkins_url(site, x['url'])
+            if data:
+                self.add_data_to_doc(x, data)
+        return data, rc
 
 
 class JenkinsJobs(JenkinsBase):
@@ -190,7 +236,17 @@ class JenkinsJobs(JenkinsBase):
         super(JenkinsJobs, self).__init__()
 
     def get_builds(self, sites, name):
-        data, rc = self.get_data(sites, name)
+        doc = self.get(name=name)
+        data, rc = self._get_data(doc)
+        if not data and rc == 200:
+            x = doc[0]
+            site_name = x['name'].split(':')[0]
+            site = sites.get(name=site_name)
+            site = site[0]
+            data, rc = self._get_jenkins_url(site, x['url'])
+            if data:
+                self.add_data_to_doc(x, data)
+
         if not data:
             builds = []
         else:
@@ -266,6 +322,7 @@ class JenkinsBuilds(JenkinsBase):
 class JenkinsTestReports(JenkinsBase):
     def __init__(self):
         self.collection = db.db.jenkins_test_reports
+        self.suites = JenkinsSuites()
         super(JenkinsTestReports, self).__init__()
 
     def get_tests_from_builds(self, builds_response, test_data_fields=None):
@@ -288,13 +345,66 @@ class JenkinsTestReports(JenkinsBase):
                 res.append(d)
         return res
 
+    def insert_suites(self, suites):
+        suite_ids = list()
+        for suite in suites:
+            suite_id = self.suites.insert(suite, allow_duplicates=True)
+            if suite_id:
+                suite_ids.append(str(suite_id))
+        return suite_ids
 
-class JenkinsData(DbDocument):
-    def __init__(self):
-        self.collection = db.db.jenkins_data
+    def get_suites(self, name):
+        doc = self.get(name=name, data_fields="suites")
+        x = doc[0]
+        suite_ids = x['data'].get('suites', list())
+        res = list()
+        for suite_id in suite_ids:
+            s, _ = self.get_suites_by_id(suite_id)
+            res.append(s)
+        return res, 200
 
+    def get_suites_by_id(self, suite_id):
+        s = self.suites.get_doc(doc_id=suite_id)
+        s['_id'] = str(s['_id'])
+        return s, 200
 
-class JenkinsLabels(DbDocument):
-    def __init__(self):
-        self.collection = db.db.jenkins_labels
+    def get_data(self, sites, name):
+        """
+        Overrides base class method since we want to store suites data separately
+        :param sites: 
+        :param name: 
+        :return: 
+        """
+        doc = self.get(name=name)
+        data, rc = self._get_data(doc)
+        if not data and rc == 200:
+            # fetch data from jenkins
+            x = doc[0]
+            site_name = x['name'].split(':')[0]
+            site = sites.get(name=site_name)
+            site = site[0]
+            data, rc = self._get_jenkins_url(site, x['url'])
+            if data and data.get('suites'):
+                # store suites in separate collection
+                suites = data['suites']
+                suite_ids = self.insert_suites(suites)
+                data['suites'] = suite_ids
+                self.add_data_to_doc(x, data)
+        return data, rc
+
+    def get_reports(self, data=None, last=None):
+        res = self.get_by_fields()
+        if data:
+            res = [r for r in res if self.has_data(r)]
+        if last:
+            jobs = set([r['job'] for r in res])
+            x = list()
+            for job in jobs:
+                r_job = [r for r in res if r['job'] == job]
+                builds = [r['build'] for r in r_job]
+                builds = sorted(builds, reverse=True)
+                builds = builds if len(builds) <= last else builds[:last]
+                x = x + [r for r in r_job if r['job'] == job and r['build'] in builds]
+            res = x
+        return res
 

@@ -1,42 +1,29 @@
-import logging.config
-from flask import Flask, Blueprint, current_app, render_template, request
-from server import settings
-from server.api.jenkins.endpoints.sites import ns as jenkins_sites_namespace
-from server.api.jenkins.endpoints.jobs import ns as jenkins_jobs_namespace
-from server.api.jenkins.endpoints.builds import ns as jenkins_builds_namespace
-from server.api.jenkins.endpoints.test_reports import ns as jenkins_test_reports_namespace
-from server.api.jenkins.endpoints.stats import ns as jenkins_test_stats_namespace
-from server.api.jenkins.endpoints.datas import ns as jenkins_datas_namespace
-from server.api.jenkins.endpoints.labels import ns as jenkins_labels_namespace
-from server.api.common import api
-from server.db import db
-import os
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 import argparse
+import logging.config
+import os
 
-# in future replace dist-flask with dist/ and place AngularJS front-end there
-USE_ANGULAR = False
+from flask import Flask, Blueprint
 
-if USE_ANGULAR:
-    app = Flask(__name__, static_folder='../dist')
-
-    @app.route('/')
-    def index():
-        return current_app.send_static_file('index.html')
-else:
-    from server.fe_flask.views import home
-    app = Flask(__name__,
-                template_folder='fe_flask',
-                static_folder='fe_flask/static')
-
-    @app.route('/', methods=('GET', 'POST'))
-    def index():
-        return home()
-
+from server import settings
+from server.api.common import api
+from server.api.jenkins.endpoints.builds import ns as jenkins_builds_namespace
+from server.api.jenkins.endpoints.datas import ns as jenkins_datas_namespace
+from server.api.jenkins.endpoints.jobs import ns as jenkins_jobs_namespace
+from server.api.jenkins.endpoints.labels import ns as jenkins_labels_namespace
+from server.api.jenkins.endpoints.sites import ns as jenkins_sites_namespace
+from server.api.jenkins.endpoints.stats import ns as jenkins_test_stats_namespace
+from server.api.jenkins.endpoints.test_reports import ns as jenkins_test_reports_namespace
+from server.db import db
 
 logging_conf_file = os.path.abspath("server/logging.conf")
 print(logging_conf_file)
 logging.config.fileConfig(logging_conf_file)
 log = logging.getLogger(__name__)
+
+app = Flask(__name__)
 
 
 def configure_app(flask_app):
@@ -62,9 +49,6 @@ def initialize_app(flask_app):
     api.add_namespace(jenkins_datas_namespace)
     api.add_namespace(jenkins_labels_namespace)
     flask_app.register_blueprint(blueprint)
-
-    # bp_ui = Blueprint('fe_flask', __name__, url_prefix='/')
-    # flask_app.register_blueprint(bp_ui)
 
     db.init_app(flask_app)
 

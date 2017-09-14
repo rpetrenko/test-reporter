@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 """
 This should work only with internal database, no requests to jenkins should be made here
 """
@@ -35,7 +38,8 @@ class Stats(ReporterBase):
             'builds': self.builds.get_count(),
             'test_reports': self.test_reports.get_count(),
             'data': self.sites.data_collection.count(),
-            'labels': self.labels.get_count()
+            'labels': self.labels.get_count(),
+            'suites': self.test_reports.suites.get_count()
         }
         return data, 200
 

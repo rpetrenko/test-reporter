@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 # Flask settings
 import os
 # FLASK_SERVER_NAME = '0.0.0.0:8888'

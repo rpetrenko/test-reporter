@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 from flask_restplus import reqparse
 
 
@@ -8,6 +11,11 @@ get_args.add_argument('data_only',
                       default=0,
                       choices=[0, 1],
                       help="Get only records with data")
+get_args.add_argument('last',
+                      type=int,
+                      required=False,
+                      default=0,
+                      help="Get only records N-latest results")
 
 get_data_args = reqparse.RequestParser()
 get_data_args.add_argument('data_fields',

@@ -1,0 +1,28 @@
+suites:
+- suite: suite_name1
+  framework: test_framework1
+  scenarios:
+  - scenario: scenario_name11
+    testCases:
+    - testCase: test_case_name111
+      tests:
+      - test: test_step_name1111
+      - test: test_step_name1112
+    - testCase: test_case_name112
+      tests:
+      - test: test_step_name1121
+      - test: test_step_name1122
+  - scenario: scenario_name12
+    testCases:
+    - testCase: test_case_name121
+      tests:
+      - test: test_step_name1211
+      - test: test_step_name1212
+- suite: suite_name2
+  framework: test_framework2
+  scenarios:
+  - scenario: scenario_name1
+    testCases:
+    - testCase: test_case_name1
+      tests:
+      - test: test_step_name1

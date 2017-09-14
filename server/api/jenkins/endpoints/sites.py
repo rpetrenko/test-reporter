@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 import logging
 
 from flask import request
@@ -58,5 +61,5 @@ class Site(SiteBase):
 @api.response(404, 'Site not found.')
 class SiteInfo(SiteBase):
     def get(self, name):
-        return self.model.get_data(self, name)
+        return self.model.get_site_data(name)
 

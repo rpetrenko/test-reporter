@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 import logging
 from flask import request
 from flask_restplus import Resource
@@ -35,15 +38,31 @@ class TestReports(TestReportBase):
     def get(self):
         args = get_args.parse_args(request)
         data = args.get('data_only', False)
-        resp = self.model.get(data=data)
+        last = args.get('last', None)
+        resp = self.model.get_reports(data=data, last=last)
         log.info("Got {} records for test reports".format(len(resp)))
         return resp
 
     @api.response(201, "Added jenkins build.")
     @api.expect(test_report_schema)
     def post(self):
+        """
+        data structure:
+        {
+            url: <jenkins_url/build_number/testReport>,
+            data: null,
+            name: site:url_job_path:build_number:testReport
+        }
+        this just creates DB record for the build, the test results
+        are populated by /<string:name>/info GET request
+        reference to data is None here
+        :return: 
+        """
         data = request.json
         data['name'] = self.url_to_name(data['url'])
+        names = data['name'].split(':')
+        data['job'] = ":".join(names[:-2])
+        data['build'] = names[-2]
         rc = self.model.insert(data)
         return None, rc and 201 or 200
 
@@ -85,13 +104,31 @@ class TestReport(TestReportBase):
 @ns.route('/<string:name>/info')
 @api.response(404, 'Report not found.')
 class TestReportInfo(TestReportBase):
+    """
+    Test results are populated here
+    """
     def get(self, name):
         data, rc = self.model.get_data(self.sites, name)
-        if rc == 404:
-            # handle test report when there is no data
-            x = self.model.get(name=name)
-            x = x[0]
-            self.model.add_data_to_doc(x, data)
-            rc = 200
         return data, rc
 
+
+@ns.route('/<string:name>/suites')
+@api.response(404, 'Report suites not found.')
+class TestReportSuites(TestReportBase):
+    """
+    Test results are populated here
+    """
+    def get(self, name):
+        data, rc = self.model.get_suites(name)
+        return data, rc
+
+
+@ns.route('/suites/<string:suite_id>')
+@api.response(404, 'Report suite not found.')
+class TestReportSuite(TestReportBase):
+    """
+    Get test suite by it's id
+    """
+    def get(self, suite_id):
+        data, rc = self.model.get_suites_by_id(suite_id)
+        return data, rc

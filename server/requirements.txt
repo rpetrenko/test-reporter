@@ -2,3 +2,4 @@ flask
 flask-restplus
 flask_pymongo
 requests
+pyyaml

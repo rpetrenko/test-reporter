@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 import re
 from pymongo import MongoClient
 import requests
@@ -156,6 +159,8 @@ class JenkinsFetcher(object):
     def fetch_test_results(self):
         print("Getting jenkins test results")
         builds = self.db.jenkins_builds.find()
+
+        # create test records
         for build in builds:
             print("FT BUILD:", build)
             test_url = build['url'].rstrip('/')
@@ -167,13 +172,15 @@ class JenkinsFetcher(object):
             resp = requests.post(uri, json=data)
             assert resp.ok, "can't fetch test report metadata"
 
+        # populate with test results
         reports = self.db.jenkins_test_reports.find()
         for report in reports:
             print("FT REPORT", report)
             uri = "{}/test_reports/{}/info".format(self.api_url, report['name'])
             print("GET {}".format(uri))
             resp = requests.get(uri)
-            assert resp.ok, "can't fetch test report"
+            if not resp.ok:
+                print("TR_ERROR", "can't fetch test report")
 
 
 def main():

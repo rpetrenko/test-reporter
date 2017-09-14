@@ -1,3 +1,6 @@
+# This source code is licensed under the Apache license found in the
+# LICENSE file in the root directory of this project.
+
 from flask_restplus import fields
 from server.api.common import api
 
@@ -5,8 +8,8 @@ from server.api.common import api
 site_schema = api.model('Jenkins sites', {
     'name': fields.String(required=True, description='Jenkins name'),
     'url': fields.String(required=True, description="Jenkins URL"),
-    'username': fields.String(required=True, description="Jenkins user"),
-    'api_key': fields.String(required=True, description="Jenkins API key"),
+    # 'username': fields.String(required=True, description="Jenkins user"),
+    # 'api_key': fields.String(required=True, description="Jenkins API key"),
     'data': fields.String(required=False, description='jenkins json data')
 })
 
@@ -28,6 +31,8 @@ build_schema = api.model('Jenkins builds', {
 test_report_schema = api.model('Jenkins test reports', {
     'url': fields.String(required=True, description='test report url'),
     'name': fields.String(required=False, description="test report name"),
+    'job': fields.String(required=False, description='job name'),
+    'build': fields.String(required=False, description='build number'),
     'data': fields.String(required=False, description='jenkins json data')
 })
 

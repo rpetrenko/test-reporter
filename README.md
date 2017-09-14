@@ -20,3 +20,11 @@ python server/app.py
 For labels the following keywords predefined:
 * BUILD_ARTIFACT_API
 * BUILD_INFO_API
+
+## Test definitions, used to organize test results
+* Create definition yaml file: see example-test-definitions.yaml
+* Convert yaml to json
+```bash
+python -c "import yaml,json,pprint;pprint.pprint(json.loads(json.dumps(yaml.load(open(\"fname.yaml\").read()))))"
+```
+

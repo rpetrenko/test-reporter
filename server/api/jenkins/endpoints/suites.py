@@ -8,7 +8,7 @@ from server.api.common import api, db_response_to_json
 from server.db.models import JenkinsJobs, JenkinsSites
 
 
-ns = api.namespace('jenkins/jobs', description='Jenkins jobs')
+ns = api.namespace('jenkins/suites', description='Jenkins suites')
 
 
 class JobBase(Resource):
@@ -69,6 +69,7 @@ class Job(JobBase):
 @api.response(404, 'Job not found.')
 class JobInfo(JobBase):
     def get(self, name):
+        raise
         return self.model.get_data(self.sites, name)
 
 
