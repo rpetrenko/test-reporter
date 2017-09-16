@@ -15,6 +15,7 @@ site_schema = api.model('Jenkins sites', {
 
 job_schema = api.model('Jenkins jobs', {
     'url': fields.String(required=True, description="job url"),
+    'label': fields.String(required=True, description="job label"),
     'name': fields.String(required=False, description='job name'),
     'data': fields.String(required=False, description='jenkins json data')
 })

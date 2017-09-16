@@ -8,7 +8,7 @@ get_args = reqparse.RequestParser()
 get_args.add_argument('data_only',
                       type=int,
                       required=False,
-                      default=0,
+                      default=None,
                       choices=[0, 1],
                       help="Get only records with data")
 get_args.add_argument('last',
@@ -16,6 +16,12 @@ get_args.add_argument('last',
                       required=False,
                       default=0,
                       help="Get only records N-latest results")
+get_args.add_argument('data_fields',
+                      type=str,
+                      default='*',
+                      required=False,
+                      help="Populate records with the specified data fields")
+
 
 get_data_args = reqparse.RequestParser()
 get_data_args.add_argument('data_fields',
@@ -37,3 +43,10 @@ get_artifacts_args.add_argument('search',
                                 type=str,
                                 required=False,
                                 help="List of file patterns to fetch build artifacts")
+
+get_jobs_args = reqparse.RequestParser()
+get_jobs_args.add_argument('label',
+                           type=str,
+                           required=False,
+                           default=None,
+                           help="Get only jobs with label")

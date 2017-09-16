@@ -3,6 +3,8 @@
 
 from flask import request
 from flask_restplus import Resource
+
+from server.api.jenkins.parsers import get_jobs_args
 from server.api.jenkins.serializers import job_schema
 from server.api.common import api, db_response_to_json
 from server.db.models import JenkinsJobs, JenkinsSites
@@ -21,6 +23,7 @@ class JobBase(Resource):
         uri = uri.rstrip('/')
         parts = uri.split('/job/')
         site = self.sites.get(url=parts[0])
+        site = site[0]
         assert site, 'site was not found'
         site_name = site['name']
         parts = [site_name] + parts[1:]
@@ -33,7 +36,9 @@ class Jobs(JobBase):
     @api.marshal_list_with(job_schema)
     def get(self):
         # log.info("getting sites")
-        return db_response_to_json(self.model.get())
+        args = get_jobs_args.parse_args(request)
+        label = args.get('label')
+        return db_response_to_json(self.model.get_jobs_by_label(label=label))
 
     @api.response(201, "Added jenkins job.")
     @api.expect(job_schema)

@@ -38,10 +38,13 @@ class DbDocument(object):
         if kwargs:
             name = kwargs.get('name')
             url = kwargs.get('url')
+            label = kwargs.get('label')
             if name:
                 query["name"] = name
             elif url:
                 query["url"] = url
+            if label:
+                query["label"] = label
         if query:
             docs = self.collection.find(query)
         else:
@@ -211,6 +214,12 @@ class JenkinsSuites(JenkinsBase):
         super(JenkinsSuites, self).__init__()
 
 
+class JenkinsCases(JenkinsBase):
+    def __init__(self):
+        self.collection = db.db.jenkins_cases
+        super(JenkinsCases, self).__init__()
+
+
 class JenkinsSites(JenkinsBase):
     def __init__(self):
         self.collection = db.db.jenkins_sites
@@ -256,6 +265,10 @@ class JenkinsJobs(JenkinsBase):
             else:
                 builds = []
         return builds, 200
+
+    def get_jobs_by_label(self, label=None):
+        res = self.get_by_fields(label=label)
+        return res
 
 
 class JenkinsBuilds(JenkinsBase):
@@ -323,6 +336,7 @@ class JenkinsTestReports(JenkinsBase):
     def __init__(self):
         self.collection = db.db.jenkins_test_reports
         self.suites = JenkinsSuites()
+        self.cases = JenkinsCases()
         super(JenkinsTestReports, self).__init__()
 
     def get_tests_from_builds(self, builds_response, test_data_fields=None):
@@ -345,9 +359,22 @@ class JenkinsTestReports(JenkinsBase):
                 res.append(d)
         return res
 
+    def insert_cases(self, cases):
+        case_ids = list()
+        for case in cases:
+            # import bson
+            # print(len(bson.BSON.encode(suite)))
+            case_id = self.cases.insert(case)
+            if case_id:
+                case_ids.append(case_id)
+        return case_ids
+
     def insert_suites(self, suites):
         suite_ids = list()
         for suite in suites:
+            if suite.get('cases'):
+                case_ids = self.insert_cases(suite['cases'])
+                suite['cases'] = case_ids
             suite_id = self.suites.insert(suite, allow_duplicates=True)
             if suite_id:
                 suite_ids.append(str(suite_id))
@@ -365,6 +392,13 @@ class JenkinsTestReports(JenkinsBase):
 
     def get_suites_by_id(self, suite_id):
         s = self.suites.get_doc(doc_id=suite_id)
+        s['_id'] = str(s['_id'])
+        if s.get('cases'):
+            s['cases'] = [str(case_id) for case_id in s['cases']]
+        return s, 200
+
+    def get_cases_by_id(self, case_id):
+        s = self.cases.get_doc(doc_id=case_id)
         s['_id'] = str(s['_id'])
         return s, 200
 
@@ -392,10 +426,14 @@ class JenkinsTestReports(JenkinsBase):
                 self.add_data_to_doc(x, data)
         return data, rc
 
-    def get_reports(self, data=None, last=None):
+    def get_reports(self, data=None, last=None, data_fields=None):
         res = self.get_by_fields()
         if data:
             res = [r for r in res if self.has_data(r)]
+        elif data is None:
+            pass
+        else:
+            res = [r for r in res if not self.has_data(r)]
         if last:
             jobs = set([r['job'] for r in res])
             x = list()
@@ -406,5 +444,8 @@ class JenkinsTestReports(JenkinsBase):
                 builds = builds if len(builds) <= last else builds[:last]
                 x = x + [r for r in r_job if r['job'] == job and r['build'] in builds]
             res = x
+        if data and data_fields:
+            # populate and filter data
+            res = self.populate_data(res, data_fields)
         return res
 

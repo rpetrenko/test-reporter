@@ -33,7 +33,7 @@ def drop_db(client, name):
     client.drop_database(name)
 
 
-def populate_db(db, fname):
+def populate_db(db, fname, server_url):
     """
     Populate DB from file
     :param db: 
@@ -52,10 +52,13 @@ def populate_db(db, fname):
 
     jobs = data['jobs']
     for job in jobs:
-        if db.jenkins_jobs.find_one({"name": job['name']}):
+        if db.jenkins_jobs.find_one({"url": job['url']}):
             continue
         else:
-            rec_id = db.jenkins_jobs.insert_one(job).inserted_id
+            uri = "{}/jobs/".format(server_url)
+            resp = requests.post(uri, json=job)
+            assert resp.ok, "can't post jenkins job to the report server"
+            # rec_id = db.jenkins_jobs.insert_one(job).inserted_id
 
     labels = data['labels']
     for label in labels:
@@ -191,10 +194,10 @@ def main():
 
     db = client.reporting
     # populate with sites and jobs from .data file
-    populate_db(db, args.data_file)
+    server_url = "http://{}:{}/api/jenkins".format(args.host, args.port)
+    populate_db(db, args.data_file, server_url)
 
     # fetch jenkins info and store in DB
-    server_url = "http://{}:{}/api/jenkins".format(args.host, args.port)
     jf = JenkinsFetcher(db, server_url)
     jf.fetch_sites()
     if args.get_builds:

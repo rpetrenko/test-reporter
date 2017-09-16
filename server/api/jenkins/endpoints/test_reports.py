@@ -37,9 +37,10 @@ class TestReports(TestReportBase):
     @api.marshal_list_with(test_report_schema)
     def get(self):
         args = get_args.parse_args(request)
-        data = args.get('data_only', False)
+        data = args.get('data_only', None)
         last = args.get('last', None)
-        resp = self.model.get_reports(data=data, last=last)
+        data_fields = args.get('data_fields', None)
+        resp = self.model.get_reports(data=data, last=last, data_fields=data_fields)
         log.info("Got {} records for test reports".format(len(resp)))
         return resp
 
@@ -131,4 +132,15 @@ class TestReportSuite(TestReportBase):
     """
     def get(self, suite_id):
         data, rc = self.model.get_suites_by_id(suite_id)
+        return data, rc
+
+
+@ns.route('/cases/<string:case_id>')
+@api.response(404, 'Report case not found.')
+class TestReportCase(TestReportBase):
+    """
+    Get test case by it's id
+    """
+    def get(self, case_id):
+        data, rc = self.model.get_cases_by_id(case_id)
         return data, rc
