@@ -6,10 +6,10 @@ from flask import request
 from flask_restplus import Resource
 import json
 
-from server.api.jenkins.parsers import get_data_args, get_artifacts_args
+from server.api.jenkins.parsers import get_data_args, get_artifacts_args, get_build_args
 from server.api.jenkins.serializers import build_schema
 from server.api.common import api, db_response_to_json
-from server.db.models import JenkinsBuilds, JenkinsSites
+from server.db.models import JenkinsBuilds, JenkinsSites, JenkinsJobs
 
 ns = api.namespace('jenkins/builds', description='Jenkins builds')
 log = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ class BuildBase(Resource):
     def __init__(self, api=None, *args, **kwargs):
         self.model = JenkinsBuilds()
         self.sites = JenkinsSites()
+        self.jobs = JenkinsJobs()
         super(BuildBase, self).__init__(api, args, kwargs)
 
     def url_to_name(self, uri):
@@ -35,9 +36,17 @@ class BuildBase(Resource):
 @ns.route('/')
 class Builds(BuildBase):
 
+    @api.expect(get_build_args)
     @api.marshal_list_with(build_schema)
     def get(self):
-        return db_response_to_json(self.model.get())
+        args = get_build_args.parse_args(request)
+        job_label = args.get('job_label', None)
+        if job_label:
+            jobs = self.jobs.get_jobs_by_label(job_label)
+            resp = self.model.get_builds(jobs=jobs)
+        else:
+            resp = self.model.get()
+        return db_response_to_json(resp)
 
     @api.response(201, "Added jenkins build.")
     @api.expect(build_schema)

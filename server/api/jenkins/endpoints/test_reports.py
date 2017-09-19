@@ -4,7 +4,7 @@
 import logging
 from flask import request
 from flask_restplus import Resource
-from server.api.jenkins.parsers import get_args, get_data_args
+from server.api.jenkins.parsers import get_args, get_data_args, get_cases_args
 from server.api.jenkins.serializers import test_report_schema
 from server.api.common import api, db_response_to_json
 from server.db.models import JenkinsTestReports, JenkinsSites
@@ -40,7 +40,11 @@ class TestReports(TestReportBase):
         data = args.get('data_only', None)
         last = args.get('last', None)
         data_fields = args.get('data_fields', None)
-        resp = self.model.get_reports(data=data, last=last, data_fields=data_fields)
+        names = args.get('names', None)
+        resp = self.model.get_reports(data=data,
+                                      last=last,
+                                      data_fields=data_fields,
+                                      names=names)
         log.info("Got {} records for test reports".format(len(resp)))
         return resp
 
@@ -124,6 +128,20 @@ class TestReportSuites(TestReportBase):
         return data, rc
 
 
+@ns.route('/<string:name>/cases')
+@api.response(404, 'Report cases not found.')
+class TestReportCases(TestReportBase):
+    """
+    Test results are populated here
+    """
+    @api.expect(get_cases_args)
+    def get(self, name):
+        args = get_cases_args.parse_args(request)
+        cases_fields = args.get('cases_fields', None)
+        data, rc = self.model.get_cases(name, cases_fields=cases_fields)
+        return data, rc
+
+
 @ns.route('/suites/<string:suite_id>')
 @api.response(404, 'Report suite not found.')
 class TestReportSuite(TestReportBase):
@@ -133,7 +151,6 @@ class TestReportSuite(TestReportBase):
     def get(self, suite_id):
         data, rc = self.model.get_suites_by_id(suite_id)
         return data, rc
-
 
 @ns.route('/cases/<string:case_id>')
 @api.response(404, 'Report case not found.')

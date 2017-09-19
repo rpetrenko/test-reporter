@@ -270,11 +270,20 @@ class JenkinsJobs(JenkinsBase):
         res = self.get_by_fields(label=label)
         return res
 
+    def get_jobs_labels(self):
+        res = set()
+        for x in self.collection.find():
+            res.add(x['label'])
+        return {"unique_labels": list(res)}
+
 
 class JenkinsBuilds(JenkinsBase):
     def __init__(self):
         self.collection = db.db.jenkins_builds
         super(JenkinsBuilds, self).__init__()
+
+    def build_name_to_job_name(self, build_name):
+        return ":".join(build_name.split(":")[:-1])
 
     def filter_artifacts(self, artifacts, search):
         """
@@ -331,6 +340,14 @@ class JenkinsBuilds(JenkinsBase):
             build = build[0]
         return build['artifacts']
 
+    def get_builds(self, jobs=None):
+        builds = self.get()
+        if jobs:
+            # filter builds by job list
+            job_names = [x['name'] for x in jobs]
+            builds = [b for b in builds if self.build_name_to_job_name(b['name']) in job_names]
+        return builds
+
 
 class JenkinsTestReports(JenkinsBase):
     def __init__(self):
@@ -364,7 +381,7 @@ class JenkinsTestReports(JenkinsBase):
         for case in cases:
             # import bson
             # print(len(bson.BSON.encode(suite)))
-            case_id = self.cases.insert(case)
+            case_id = self.cases.insert(case, allow_duplicates=True)
             if case_id:
                 case_ids.append(case_id)
         return case_ids
@@ -397,6 +414,24 @@ class JenkinsTestReports(JenkinsBase):
             s['cases'] = [str(case_id) for case_id in s['cases']]
         return s, 200
 
+    def get_cases(self, name, cases_fields=None):
+        res, _ = self.get_suites(name)
+        for i, r in enumerate(res):
+            case_ids = r.get('cases', None)
+            if case_ids:
+                cases = list()
+                for case_id in case_ids:
+                    case, _ = self.get_cases_by_id(case_id)
+                    if cases_fields is not None and cases_fields != "*":
+                        # filter out fields
+                        cases_fields = cases_fields.split(',')
+                        for k in case.keys():
+                            if k not in cases_fields:
+                                del case[k]
+                    cases.append(case)
+                res[i]['cases'] = cases
+        return res, 200
+
     def get_cases_by_id(self, case_id):
         s = self.cases.get_doc(doc_id=case_id)
         s['_id'] = str(s['_id'])
@@ -426,8 +461,22 @@ class JenkinsTestReports(JenkinsBase):
                 self.add_data_to_doc(x, data)
         return data, rc
 
-    def get_reports(self, data=None, last=None, data_fields=None):
-        res = self.get_by_fields()
+    def get_reports(self,
+                    data=None,
+                    last=None,
+                    data_fields=None,
+                    names=None):
+        if names:
+            names = names.split(',')
+            res = list()
+            for name in names:
+                # convert build name to testresport name
+                name = "{}:testReport".format(name)
+                res = res + self.get_by_fields(name=name)
+            # invalidate "last" key, since we supplied explicitly the names
+            last = None
+        else:
+            res = self.get_by_fields()
         if data:
             res = [r for r in res if self.has_data(r)]
         elif data is None:

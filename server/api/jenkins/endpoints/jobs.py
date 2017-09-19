@@ -82,3 +82,12 @@ class JobInfo(JobBase):
 class JobBuildNumbers(JobBase):
     def get(self, name):
         return self.model.get_builds(self.sites, name)
+
+
+@ns.route('/labels')
+@api.response(404, 'Labels not found.')
+class JobBuildNumbers(JobBase):
+    def get(self):
+        x = self.model.get_jobs_labels()
+        return db_response_to_json(x), x and 200 or 404
+

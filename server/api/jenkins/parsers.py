@@ -21,6 +21,11 @@ get_args.add_argument('data_fields',
                       default='*',
                       required=False,
                       help="Populate records with the specified data fields")
+get_args.add_argument('names',
+                      type=str,
+                      default=None,
+                      required=False,
+                      help="Get only results by build names")
 
 
 get_data_args = reqparse.RequestParser()
@@ -50,3 +55,15 @@ get_jobs_args.add_argument('label',
                            required=False,
                            default=None,
                            help="Get only jobs with label")
+
+get_build_args = reqparse.RequestParser()
+get_build_args.add_argument('job_label',
+                            type=str,
+                            required=False,
+                            help="Get only builds for given JOB LABEL")
+
+get_cases_args = reqparse.RequestParser()
+get_cases_args.add_argument('cases_fields',
+                            type=str,
+                            required=False,
+                            help="Get only specific fields for testcases")
