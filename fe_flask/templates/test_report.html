@@ -4,9 +4,7 @@
 <div class="panel panel-default">
 
     <div class="panel-heading">
-        <h1 class="panel-heading">Platform: {{ platform }} </h1>
-        <h3>Label: {{label}} </h3>
-        <h3>Test Report: {{name}}</h3>
+        <h1 class="panel-heading">{{ platform }} ({{label}})</h1>
     </div>
 
     <div class="panel-body">
@@ -17,7 +15,7 @@
             <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        {{ name }}
+                        <h4>Test Report: {{name}}</h4>
                     </div>
                     {{ suites_html|safe }}
                 </div>

@@ -212,7 +212,7 @@ def test_report_view(platform, label, name):
     if df_suites is not None:
         # print(df_suites.iloc[0, :])
         df_suites = df_suites[(df_suites["status"] == "FAILED") | (df_suites["status"] == "REGRESSION")]
-        df_suites = df_suites.sort_values(['age'], ascending=False)
+        df_suites = df_suites.sort_values(['className', 'name'], ascending=True)
         cols = ["age", "status", "className", "name", "duration"]
         suites_html = pd_to_html(df_suites, cols=cols, escape=False)
     else:
