@@ -41,11 +41,12 @@ class Builds(BuildBase):
     def get(self):
         args = get_build_args.parse_args(request)
         job_label = args.get('job_label', None)
+        data_fields = args.get('data_fields', None)
         if job_label:
             jobs = self.jobs.get_jobs_by_label(job_label)
-            resp = self.model.get_builds(jobs=jobs)
+            resp = self.model.get_builds(jobs=jobs, data_fields=data_fields)
         else:
-            resp = self.model.get()
+            resp = self.model.get(data_fields=data_fields)
         return db_response_to_json(resp)
 
     @api.response(201, "Added jenkins build.")

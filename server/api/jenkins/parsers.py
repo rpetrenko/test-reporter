@@ -61,6 +61,10 @@ get_build_args.add_argument('job_label',
                             type=str,
                             required=False,
                             help="Get only builds for given JOB LABEL")
+get_build_args.add_argument('data_fields',
+                            type=str,
+                            required=False,
+                            help="Populate with datafields")
 
 get_cases_args = reqparse.RequestParser()
 get_cases_args.add_argument('cases_fields',

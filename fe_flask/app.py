@@ -13,7 +13,7 @@ if USE_ANGULAR:
     def index():
         return current_app.send_static_file('index.html')
 else:
-    from views import home_view, platform_view, test_report_view
+    from views import home_view, platform_view, test_report_view, branch_view
     app = Flask(__name__,
                 template_folder='templates',
                 static_folder='static')
@@ -25,6 +25,10 @@ else:
     @app.route('/platform/<name>')
     def platform(name):
         return platform_view(name)
+
+    @app.route('/platform/<platform>/branch/<name>')
+    def branch(platform, name):
+        return branch_view(platform, name)
 
     @app.route('/platform/<platform>/label/<label>/test_report/<name>')
     def test_report(platform, label, name):

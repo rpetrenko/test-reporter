@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block container %}
+<div class="panel panel-default">
+
+    <div class="panel-heading">
+        <h1 class="panel-heading">{{ platform }} ({{name}})</h1>
+    </div>
+
+    <div class="panel-body">
+        <div class="row">
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                    </div>
+                    {{ suites_html|safe }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

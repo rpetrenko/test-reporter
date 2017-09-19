@@ -27,8 +27,11 @@
                     <ul>
                         {% for name in product.jobs.short_name %}
                         <li>
-                            <a target="_blank" href="{{product.jobs.url_y[loop.index-1]}}"> =>
-
+                            <a target="_blank" href="{{product.jobs.url_y[loop.index-1]}}">
+                                <img src="{{ url_for('static', filename='jenkins.png') }}"
+                                     alt="J"
+                                     style="width:16px;height:16px;"
+                                >
                             </a>
                             {{name}}
                             ({{product.jobs.failCount[loop.index-1]}}/{{product.jobs.total[loop.index-1]}})

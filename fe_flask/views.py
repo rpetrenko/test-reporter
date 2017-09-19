@@ -50,12 +50,19 @@ def get_jobs():
 
 
 def get_builds(job_label):
-    uri = "{}/builds/?job_label={}".format(API_URL, job_label)
+    data_fields = "timestamp,result"
+    uri = "{}/builds/?job_label={}&data_fields={}".format(API_URL, job_label, data_fields)
     df = _get_data_as_dataframe(uri)
     # remove records without labels
     df = df.dropna(subset=['label'])
     df['temp'] = df['name'].apply(lambda x: str({"build": x.split(':')[-1], "job": ":".join(x.split(':')[:-1])}))
-    return pd_spread_to_columns(df, 'temp')
+    df = pd_spread_to_columns(df, 'temp')
+    if data_fields:
+        df = pd_spread_to_columns(df, 'data')
+        df['date'] = df['timestamp'].apply(
+            lambda x: pd.to_datetime(int(x)/1000, unit='s'))
+    print(df.iloc[0, :])
+    return df
 
 
 def create_product_list(df):
@@ -75,9 +82,14 @@ def create_product_list(df):
 
 
 def pd_spread_to_columns(df, col_name):
+    existing_cols = df.columns
     df2 = df[col_name].apply(lambda x: eval(x))
     for k in df2.iloc[0].keys():
-        df[k] = df2.apply(lambda x: x[k])
+        if k in existing_cols:
+            new_k = "{}_{}".format(col_name, k)
+        else:
+            new_k = k
+        df[new_k] = df2.apply(lambda x: x[k])
     del df[col_name]
     return df
 
@@ -188,7 +200,7 @@ def platform_view(name):
 
     # print(df_builds.iloc[0, :])
 
-    cols = ["label", "name_x", "failCount", "total", "duration"]
+    cols = ["label", "name_x", "failCount", "total", "duration", "date", "result"]
     branches = df_builds['branch'].unique()
     builds_htmls = list()
     for branch in branches:
@@ -205,6 +217,10 @@ def platform_view(name):
             }
         )
     return render_template('platform.html', name=name, data=builds_htmls)
+
+
+def branch_view(platform, name):
+    return render_template('branch.html', platform=platform, name=name)
 
 
 def test_report_view(platform, label, name):

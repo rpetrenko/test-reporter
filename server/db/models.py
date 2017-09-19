@@ -340,8 +340,8 @@ class JenkinsBuilds(JenkinsBase):
             build = build[0]
         return build['artifacts']
 
-    def get_builds(self, jobs=None):
-        builds = self.get()
+    def get_builds(self, jobs=None, data_fields=None):
+        builds = self.get(data_fields=data_fields)
         if jobs:
             # filter builds by job list
             job_names = [x['name'] for x in jobs]
