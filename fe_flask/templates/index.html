@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block container %}
+<div class="panel panel-default">
+
+    <div class="panel-heading">
+        <h1 class="panel-heading">Platform Components</h1>
+    </div>
+
+    <div class="panel-body">
+
+        <div class="row">
+            {% for product in products %}
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h2>
+                            {{ product.name }}
+                        </h2>
+                        <p>
+                            Latest fail/total
+                            <a href="/platform/{{product.name}}">
+                            ({{product.failed}}/{{product.tot}})
+                            </a>
+                        </p>
+                    </div>
+                    <ul>
+                        {% for name in product.jobs.short_name %}
+                        <li>
+                            <a target="_blank" href="{{product.jobs.url_y[loop.index-1]}}"> =>
+
+                            </a>
+                            {{name}}
+                            ({{product.jobs.failCount[loop.index-1]}}/{{product.jobs.total[loop.index-1]}})
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h1>Cross-component workflows</h1>
+                    </div>
+                    {{ table_github|safe }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

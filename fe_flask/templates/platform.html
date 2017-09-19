@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block container %}
+<div class="panel panel-default">
+
+    <div class="panel-heading">
+        <h1 class="panel-heading">Platform Components: {{ name }}</h1>
+    </div>
+
+    <div class="panel-body">
+        <div class="row">
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                {% for x in data %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h1>Branch {{x.branch}}</h1>
+                        <p>
+                            Latest failed/total
+                            <a href="/platform/{{name}}/branch/{{x.branch}}">
+                            ({{x.failed}}/{{x.total}})
+                            </a>
+                        </p>
+                    </div>
+                    {{ x.html|safe }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

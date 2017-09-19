@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Reporting</title>
+
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+        <!--for date picker-->
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+        <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+        <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+        <script>
+        $(function() {
+            $( ".dtpick" ).datepicker();
+        });
+        </script>
+
+        <!-- boostrap -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">-->
+        <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    </head>
+
+    <body>
+
+        <!--<div>-->
+            <!--<ul class="nav nav-tabs">-->
+              <!--<li role="presentation" class="active"><a href="#">Home</a></li>-->
+              <!--<li role="presentation"><a href="#">Profile</a></li>-->
+              <!--<li role="presentation"><a href="#">Messages</a></li>-->
+            <!--</ul>-->
+        <!--</div>-->
+
+        <div class="navbar" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <ul class="nav nav-pills">
+                        <li role="presentation">
+                            <button type="button" class="btn btn-default btn-sm">
+
+                                <a class="navbar-brand" href="{{ url_for('index')}}">
+                                    <span class="glyphicon glyphicon-home"> </span> Home
+                                </a>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            {% block container %}{% endblock %}
+        </div>
+
+    </body>
+
+</html>

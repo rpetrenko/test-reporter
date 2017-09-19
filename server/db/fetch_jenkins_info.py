@@ -2,6 +2,7 @@
 # LICENSE file in the root directory of this project.
 
 import re
+import time
 from pymongo import MongoClient
 import requests
 import json
@@ -194,6 +195,7 @@ def main():
 
     db = client.reporting
     # populate with sites and jobs from .data file
+    start = time.time()
     server_url = "http://{}:{}/api/jenkins".format(args.host, args.port)
     populate_db(db, args.data_file, server_url)
 
@@ -205,6 +207,7 @@ def main():
         jf.apply_labels_to_builds()
     if args.get_tests:
         jf.fetch_test_results()
+    print("Populating DB takes {}s".format(time.time() - start))
 
 
 if __name__ == "__main__":

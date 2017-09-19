@@ -1,0 +1,13 @@
+body {
+  padding-top: 5px;
+}
+.top-pad {
+  padding: 0px 0px;
+  text-align: center;
+}
+
+@media (min-width: 1370px)
+grid.less:10
+.container {
+    width: 1370px;
+}
