@@ -35,7 +35,6 @@ class Jobs(JobBase):
 
     @api.marshal_list_with(job_schema)
     def get(self):
-        # log.info("getting sites")
         args = get_jobs_args.parse_args(request)
         label = args.get('label')
         return db_response_to_json(self.model.get_jobs_by_label(label=label))
@@ -86,8 +85,16 @@ class JobBuildNumbers(JobBase):
 
 @ns.route('/labels')
 @api.response(404, 'Labels not found.')
-class JobBuildNumbers(JobBase):
+class JobLabels(JobBase):
     def get(self):
         x = self.model.get_jobs_labels()
         return db_response_to_json(x), x and 200 or 404
+
+
+@ns.route('/fetch_data')
+@api.response(404, 'Can\'t update data on jobs.')
+class JobUpdateData(JobBase):
+    def get(self):
+        x = self.model.fetch_data_all(self.sites)
+        return db_response_to_json(x)
 

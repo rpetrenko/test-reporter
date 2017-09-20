@@ -83,7 +83,14 @@ class JenkinsFetcher(object):
             resp = requests.get(uri)
             assert resp.ok, "jenkins site is not reachable {}".format(uri)
 
+    def update_jenkins_jobs_data(self):
+        print("Updating data on jenkins jobs")
+        uri = "{}/jobs?fetch_data".format(self.api_url)
+        resp = requests.get(uri)
+        assert resp.ok
+
     def fetch_builds(self, build_limit=None):
+        self.update_jenkins_jobs_data()
         print("Getting jenkins builds")
         jobs = self.db.jenkins_jobs.find()
 

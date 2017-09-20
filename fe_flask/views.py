@@ -53,8 +53,9 @@ def get_jobs():
 
 
 def get_builds(job_label):
+    # get only completed builds
     data_fields = "timestamp,result"
-    uri = "{}/builds/?job_label={}&data_fields={}".format(API_URL, job_label, data_fields)
+    uri = "{}/builds/?building=0&job_label={}&data_fields={}".format(API_URL, job_label, data_fields)
     df = _get_data_as_dataframe(uri)
     # remove records without labels
     df = df.dropna(subset=['label'])
@@ -183,14 +184,17 @@ def platform_view(name):
     :param name: 
     :return: 
     """
-    df_builds = get_builds(job_label=name)
+    df_builds_all = get_builds(job_label=name)
 
-    df_builds['branch'] = df_builds['label'].apply(get_first_n, args=(3,), sep=".")
-    df_builds = df_builds.groupby(['branch', 'job']).max().reset_index()
+    df_builds_all['branch'] = df_builds_all['label'].apply(get_first_n, args=(3,), sep=".")
+    # TODO retain only latest build that has test results
+    # TODO the latest build might not have test results
 
+    df_builds = df_builds_all.groupby(['branch', 'job']).max().reset_index()
     # now populate with test results
     build_names = df_builds['name'].tolist()
     df_test_reports = get_test_reports(names=build_names)
+
     df_test_reports['build_name'] = df_test_reports['name'].apply(get_first_n, args=(-1,), sep=":")
     df_builds = pd.merge(df_builds,
                          df_test_reports,

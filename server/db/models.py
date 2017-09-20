@@ -158,6 +158,14 @@ class JenkinsBase(DbDocument):
         document['data'] = str(rec_id)
         self.update(document['name'], document)
 
+    def replace_data_in_doc(self, document, data):
+        data_id = document['data']
+        db_resp = self.data_collection.delete_one({'_id': ObjectId(data_id)})
+        assert db_resp.deleted_count == 1, "didn't delete record"
+        rec_id = self.insert_data(data)
+        document['data'] = str(rec_id)
+        self.update(document['name'], document)
+
     def get_data_record(self, data_id):
         return self.data_collection.find_one({"_id": ObjectId(data_id)})
 
@@ -184,15 +192,27 @@ class JenkinsBase(DbDocument):
         doc = self.get(name=name)
         data, rc = self._get_data(doc)
         if not data and rc == 200:
-            # fetch data from jenkins
             x = doc[0]
-            site_name = x['name'].split(':')[0]
-            site = sites.get(name=site_name)
-            site = site[0]
-            data, rc = self._get_jenkins_url(site, x['url'])
+            data, rc = self.fetch_data(sites, x)
             if data:
                 self.add_data_to_doc(x, data)
         return data, rc
+
+    def fetch_data(self, sites, doc):
+        # fetch data from jenkins
+        site_name = doc['name'].split(':')[0]
+        site = sites.get(name=site_name)
+        site = site[0]
+        data, rc = self._get_jenkins_url(site, doc['url'])
+        return data, 200
+
+    def fetch_data_all(self, sites):
+        docs = self.get()
+        for doc in docs:
+            data, _ = self.fetch_data(sites, doc)
+            if data:
+                self.replace_data_in_doc(doc, data)
+        return None, 200
 
     def _get_jenkins_url(self, site, uri):
         uri = create_jenkins_uri(site['username'], site['api_key'], uri)
@@ -340,8 +360,14 @@ class JenkinsBuilds(JenkinsBase):
             build = build[0]
         return build['artifacts']
 
-    def get_builds(self, jobs=None, data_fields=None):
-        builds = self.get(data_fields=data_fields)
+    def get_builds(self, jobs=None, data_fields=None, building=None):
+        if building is not None:
+            if 'building' not in data_fields and data_fields != "*":
+                data_fields = "{},building".format(data_fields)
+            builds = self.get(data_fields=data_fields)
+            builds = [b for b in builds if b['data']['building'] == building]
+        else:
+            builds = self.get(data_fields=data_fields)
         if jobs:
             # filter builds by job list
             job_names = [x['name'] for x in jobs]

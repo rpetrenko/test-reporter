@@ -65,6 +65,10 @@ get_build_args.add_argument('data_fields',
                             type=str,
                             required=False,
                             help="Populate with datafields")
+get_build_args.add_argument('building',
+                            type=int,
+                            required=False,
+                            help="Status of the build 1-building, 0-not building")
 
 get_cases_args = reqparse.RequestParser()
 get_cases_args.add_argument('cases_fields',

@@ -42,9 +42,10 @@ class Builds(BuildBase):
         args = get_build_args.parse_args(request)
         job_label = args.get('job_label', None)
         data_fields = args.get('data_fields', None)
+        building = args.get('building', None)
         if job_label:
             jobs = self.jobs.get_jobs_by_label(job_label)
-            resp = self.model.get_builds(jobs=jobs, data_fields=data_fields)
+            resp = self.model.get_builds(jobs=jobs, data_fields=data_fields, building=building)
         else:
             resp = self.model.get(data_fields=data_fields)
         return db_response_to_json(resp)
