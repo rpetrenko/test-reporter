@@ -20,11 +20,14 @@ def convert_times(date_from, date_to):
 #     mapping = json.load(data_file)
 
 
-def get_first_n(label, first_n, sep=None):
+def get_first_n(label, first_n, sep=None, last_n=None):
     if not sep:
         sep = "."
     x = label.split(sep)
-    x = x[:first_n]
+    if last_n:
+        x = x[last_n:]
+    else:
+        x = x[:first_n]
     return sep.join(x)
 
 
@@ -61,7 +64,7 @@ def get_builds(job_label):
         df = pd_spread_to_columns(df, 'data')
         df['date'] = df['timestamp'].apply(
             lambda x: pd.to_datetime(int(x)/1000, unit='s'))
-    print(df.iloc[0, :])
+    # print(df.iloc[0, :])
     return df
 
 
@@ -142,8 +145,8 @@ def get_test_suites(name):
     :param name: test report name
     :return: 
     """
-    options = "status,duration,name,className"
-    uri = "{}/test_reports/{}/cases?{}".format(API_URL, name, options)
+    options = "status,duration,name,className,age,errorDetails"
+    uri = "{}/test_reports/{}/cases?cases_fields={}".format(API_URL, name, options)
     out = _get_data_as_json(uri)
     if not out:
         return None
@@ -153,6 +156,7 @@ def get_test_suites(name):
             case['suite_name'] = suite['name']
             cases.append(case)
     df = pd.DataFrame(cases)
+    df['T, s'] = df['duration'].astype(int)
     return df
 
 
@@ -228,9 +232,11 @@ def test_report_view(platform, label, name):
     if df_suites is not None:
         # print(df_suites.iloc[0, :])
         df_suites = df_suites[(df_suites["status"] == "FAILED") | (df_suites["status"] == "REGRESSION")]
+
         df_suites = df_suites.sort_values(['className', 'name'], ascending=True)
-        cols = ["age", "status", "className", "name", "duration"]
-        suites_html = pd_to_html(df_suites, cols=cols, escape=False)
+        #TODO map className to Components
+        cols = ["age", "status", "name", "T, s", "errorDetails"]
+        suites_html = pd_to_html(df_suites, cols=cols, escape=True)
     else:
         suites_html = ""
     return render_template('test_report.html', platform=platform, label=label, name=name, suites_html=suites_html)

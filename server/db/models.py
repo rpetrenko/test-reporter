@@ -415,6 +415,10 @@ class JenkinsTestReports(JenkinsBase):
         return s, 200
 
     def get_cases(self, name, cases_fields=None):
+        if cases_fields is not None and cases_fields != "*":
+            cases_fields_list = cases_fields.split(',')
+        else:
+            cases_fields_list = None
         res, _ = self.get_suites(name)
         for i, r in enumerate(res):
             case_ids = r.get('cases', None)
@@ -422,9 +426,8 @@ class JenkinsTestReports(JenkinsBase):
                 cases = list()
                 for case_id in case_ids:
                     case, _ = self.get_cases_by_id(case_id)
-                    if cases_fields is not None and cases_fields != "*":
-                        # filter out fields
-                        cases_fields = cases_fields.split(',')
+                    # filter out fields
+                    if cases_fields_list:
                         for k in case.keys():
                             if k not in cases_fields:
                                 del case[k]
