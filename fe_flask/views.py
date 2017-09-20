@@ -163,15 +163,20 @@ def get_test_suites(name):
 
 def home_view():
     df_jobs = get_jobs()
-
-    df_jobs["short_name"] = df_jobs["name"].apply(lambda x: x.split(":")[-1])
-    df_test_reports = get_test_reports()
-    jobs_with_reports = pd.merge(df_jobs,
-                                 df_test_reports,
-                                 how="left",
-                                 left_on="name",
-                                 right_on="job")
-    products = create_product_list(jobs_with_reports)
+    if isinstance(df_jobs, pd.DataFrame):
+        df_jobs["short_name"] = df_jobs["name"].apply(lambda x: x.split(":")[-1])
+        df_test_reports = get_test_reports()
+        jobs_with_reports = pd.merge(df_jobs,
+                                     df_test_reports,
+                                     how="left",
+                                     left_on="name",
+                                     right_on="job")
+        products = create_product_list(jobs_with_reports)
+    else:
+        products = [
+            {"name": "Looks like no jenkins jobs are defined",
+             "jobs": []}
+        ]
     return render_template('index.html', products=products)
 
 

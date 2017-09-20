@@ -1,3 +1,6 @@
+## Design notes
+* jobs that are building should never enter TR database
+
 ## create python virtualenv
 
 ## install mondgodb-server

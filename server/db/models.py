@@ -223,6 +223,7 @@ class JenkinsBase(DbDocument):
             data = jenkins_response_to_json(resp.text)
             if data.get('building'):
                 log.info("SKIP builds that are not complete")
+                data = None
         else:
             log.error(resp.text)
         return data, resp.status_code
