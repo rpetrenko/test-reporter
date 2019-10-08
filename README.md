@@ -2,11 +2,11 @@
 * jobs that are building should never enter TR database
 
 
-
 ## create python virtualenv
 todo again
 
 ## install mondgodb-server
+
 
 ## export currrent dir as python path
  ```buildoutcfg
